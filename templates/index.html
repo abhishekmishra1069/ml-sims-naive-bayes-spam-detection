@@ -1,0 +1,116 @@
+<!-- HTML5 Document Type Declaration -->
+<!DOCTYPE html>
+<!-- Root HTML element with English language specification -->
+<html lang="en">
+<head>
+    <!-- Specifies character encoding as UTF-8 for proper text rendering -->
+    <meta charset="UTF-8">
+    <!-- Viewport meta tag for responsive design on mobile devices -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Page title displayed in browser tab -->
+    <title>Spam Filter Predictor</title>
+    <!-- Load Tailwind CSS framework from CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom CSS styling section -->
+    <style>
+        /* Import Inter font from Google Fonts with weights 400 (regular), 600 (semibold), and 700 (bold) */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        /* Apply Inter font to entire body and set light gray background color */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f9;
+        }
+        /* Custom styling for "ham" (not spam) classification results - green background with dark green text */
+        .ham {
+            background-color: #d1fae5; /* Green 100 - light green background */
+            color: #065f46; /* Green 800 - dark green text */
+        }
+        /* Custom styling for "spam" classification results - red background with dark red text */
+        .spam {
+            background-color: #fee2e2; /* Red 100 - light red background */
+            color: #991b1b; /* Red 800 - dark red text */
+        }
+    </style>
+</head>
+<!-- Body element with Tailwind classes for centering: min-h-screen (full viewport height), flex, items-center (vertical center), justify-center (horizontal center), p-4 (padding) -->
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <!-- Main container div with Tailwind classes: w-full (100% width), max-w-lg (maximum width of large), 
+         bg-white (white background), shadow-xl (large shadow), rounded-xl (rounded corners), p-8 (padding), space-y-6 (vertical spacing) -->
+    <div class="w-full max-w-lg bg-white shadow-xl rounded-xl p-8 space-y-6">
+        <!-- Main heading: text-3xl (large font), font-bold (bold weight), text-center (centered), text-gray-800 (dark gray color) -->
+        <h1 class="text-3xl font-bold text-center text-gray-800">SMS Spam Detector</h1>
+        <!-- Subheading description: text-center (centered), text-gray-500 (medium gray color) -->
+        <p class="text-center text-gray-500">Enter a text message below to check if our Naive Bayes model classifies it as Ham or Spam.</p>
+
+        <!-- Input Form: action="/predict" sends data to Flask backend route, method="post" for secure data transmission, space-y-4 adds vertical spacing between elements -->
+        <form action="/predict" method="post" class="space-y-4">
+            <!-- Label for the textarea: text-sm (small font), font-medium (medium weight), text-gray-700 (dark gray) -->
+            <label for="message" class="block text-sm font-medium text-gray-700">Message to Analyze:</label>
+            <!-- Textarea for user input: id="message" connects to label, name="message" sends data to Flask as 'message' parameter -->
+            <textarea 
+                id="message" 
+                name="message" 
+                rows="4" 
+                class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
+                placeholder="Testing testing testing." 
+                required 
+            ></textarea>
+            
+            <!-- Submit button: w-full (full width), py-3 px-4 (vertical and horizontal padding), rounded-lg (rounded corners),
+                 text-white (white text), bg-indigo-600 (indigo background), hover:bg-indigo-700 (darker indigo on hover),
+                 focus:outline-none (remove default outline), focus:ring-2 (add focus ring), transition (smooth hover effect) -->
+            <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                Predict
+            </button>
+        </form>
+
+        <!-- Conditional block: Only displays if Flask backend passes 'prediction_result' data in the response -->
+        {% if prediction_result %}
+        <!-- Results section: mt-6 (top margin), border-t (top border), pt-6 (top padding) -->
+        <div class="mt-6 border-t pt-6">
+            <!-- Results heading: text-xl (extra large font), font-semibold (semibold weight), text-gray-800 (dark gray), mb-4 (bottom margin) -->
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Prediction Result</h2>
+            <!-- Results display box: p-4 (padding), rounded-lg (rounded corners), shadow-inner (inner shadow effect)
+                 Jinja2 conditional classes: applies 'spam' class if prediction is SPAM, 'ham' class if HAM, 'bg-gray-100 text-gray-700' otherwise -->
+            <div class="p-4 rounded-lg shadow-inner 
+                {% if prediction_result.prediction == 'SPAM' %} spam 
+                {% elif prediction_result.prediction == 'HAM (Not Spam)' %} ham 
+                {% else %} bg-gray-100 text-gray-700 
+                {% endif %}">
+                
+                <!-- Prediction result paragraph: text-lg (large font), font-bold (bold weight) -->
+                <p class="text-lg font-bold">
+                    Result: 
+                    <!-- Display emoji and prediction text based on classification -->
+                    {% if prediction_result.prediction == 'SPAM' %}
+                        🚨 {{ prediction_result.prediction }} <!-- Alert emoji for spam -->
+                    {% elif prediction_result.prediction == 'HAM (Not Spam)' %}
+                        ✅ {{ prediction_result.prediction }} <!-- Checkmark emoji for ham (safe) -->
+                    {% else %}
+                        {{ prediction_result.prediction }} <!-- No emoji for error cases -->
+                    {% endif %}
+                </p>
+                <!-- Display spam probability: text-sm (small font), mt-1 (top margin), font-medium (medium weight text inside span) -->
+                <p class="text-sm mt-1">Spam Probability: <span class="font-medium">{{ prediction_result.probability }}</span></p>
+                <!-- Display the user's input message: text-xs (extra small font), mt-2 (top margin), 
+                     text-gray-600 (medium gray), italic (italicized), 
+                     truncate(80) Jinja2 filter limits message display to 80 characters -->
+                <p class="text-xs mt-2 text-gray-600 italic">"{{ prediction_result.message | truncate(80) }}"</p>
+            </div>
+        </div>
+        <!-- End of conditional block: Only displayed if prediction_result exists -->
+        {% endif %}
+
+        <!-- Footer section: mt-6 (top margin), border-t (top border), pt-4 (top padding), 
+             text-center (centered text), text-xs (extra small font), text-gray-400 (light gray color) -->
+        <div class="mt-6 border-t pt-4 text-center text-xs text-gray-400">
+            Powered by Naive Bayes & Flask
+        </div>
+    </div>
+    <!-- End of main container div -->
+
+</body>
+<!-- End of HTML body -->
+</html>
+<!-- End of HTML document -->
